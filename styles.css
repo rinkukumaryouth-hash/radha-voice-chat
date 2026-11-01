@@ -318,3 +318,13 @@ body {
 .icon-btn svg, .send svg, .mic svg { width: 21px; height: 21px; display: block; }
 .mic.live svg { animation: micbeat 1.1s infinite; }
 @keyframes micbeat { 0%,100% { transform: scale(1); } 50% { transform: scale(0.86); } }
+
+/* ---------- toggle switch rows ---------- */
+.field-row label.switch {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13.5px; font-weight: 500; color: #3b4a54;
+  cursor: pointer; margin: 0;
+}
+.field-row label.switch input[type="checkbox"] {
+  width: 20px; height: 20px; accent-color: #128c7e; flex: none; margin: 0;
+}

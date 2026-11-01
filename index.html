@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#075e54" />
 <title>Radha &middot; Made for Each Other</title>
-<meta name="description" content="A voice chat room with Radha - talk to your Sarvam Voice Agent right in the browser." />
+<meta name="description" content="A voice chat room with Radha. She listens and talks back right in your browser - no server, no API key, no credits." />
 <link rel="icon" href="assets/radha-avatar.jpg" />
 <link rel="apple-touch-icon" href="assets/radha-avatar.jpg" />
 <link rel="stylesheet" href="styles.css" />
@@ -27,7 +27,6 @@
   <!-- Chat -->
   <section class="chat" id="chat" aria-live="polite">
     <div class="day-divider"><span id="today">Today</span></div>
-    <!-- messages injected here -->
     <div class="row in typing" id="typingRow">
       <div class="bubble"><div class="dots"><i></i><i></i><i></i></div></div>
     </div>
@@ -58,66 +57,52 @@
     </header>
     <div class="body">
       <div class="notice">
-        <strong>No server, your key stays in your browser.</strong> This page is fully static and open source.
-        The Voice Agents API key is stored only in this browser's <code>localStorage</code> and is sent straight to
-        Sarvam &mdash; never to us. For a public/production site, put the key behind a proxy instead.
+        <strong>100% in your browser.</strong> Radha listens with your browser's own speech
+        recognition and speaks with its built-in voices. No server, no API key, no Sarvam credits.
+        Nothing you say leaves the device except through the browser's own speech service.
       </div>
 
       <div class="field-row">
-        <label for="cfgAppId">Agent ID (app_id)</label>
-        <input id="cfgAppId" placeholder="paste your agent ID" />
-        <div class="hint">Dashboard &rarr; your agent &rarr; &middot;&middot;&middot; menu &rarr; Copy agent ID.</div>
-      </div>
-
-      <div class="field-row">
-        <label for="cfgApiKey">API key (X-API-Key)</label>
-        <input id="cfgApiKey" type="password" placeholder="paste your Voice Agents API key" />
-        <div class="hint">Separate from standard Sarvam TTS/STT keys.</div>
-      </div>
-
-      <div class="field-row">
-        <label for="cfgOrg">Organization ID</label>
-        <input id="cfgOrg" />
-      </div>
-
-      <div class="field-row">
-        <label for="cfgWorkspace">Workspace ID</label>
-        <input id="cfgWorkspace" />
-      </div>
-
-      <div class="field-row">
-        <label for="cfgUser">Your identifier</label>
-        <input id="cfgUser" placeholder="radha-web-user" />
-        <div class="hint">Shown as the user id in Log Analyser.</div>
-      </div>
-
-      <div class="field-row">
-        <label for="cfgLang">Starting language</label>
+        <label for="cfgLang">Language</label>
         <select id="cfgLang">
-          <option value="">Agent default</option>
-          <option value="Hindi">Hindi</option>
-          <option value="English">English</option>
-          <option value="Bengali">Bengali</option>
-          <option value="Gujarati">Gujarati</option>
-          <option value="Kannada">Kannada</option>
-          <option value="Malayalam">Malayalam</option>
-          <option value="Marathi">Marathi</option>
-          <option value="Odia">Odia</option>
-          <option value="Punjabi">Punjabi</option>
-          <option value="Sanskrit">Sanskrit</option>
-          <option value="Tamil">Tamil</option>
-          <option value="Telugu">Telugu</option>
-          <option value="Assamese">Assamese</option>
+          <option value="hi-IN">Hindi &mdash; हिन्दी</option>
+          <option value="en-IN">English (India)</option>
+          <option value="en-US">English (US)</option>
+          <option value="bn-IN">Bengali &mdash; বাংলা</option>
+          <option value="mr-IN">Marathi &mdash; मराठी</option>
+          <option value="ta-IN">Tamil &mdash; தமிழ்</option>
+          <option value="te-IN">Telugu &mdash; తెలుగు</option>
+          <option value="gu-IN">Gujarati &mdash; ગુજરાતી</option>
+          <option value="kn-IN">Kannada &mdash; ಕನ್ನಡ</option>
+          <option value="ml-IN">Malayalam &mdash; മലയാളം</option>
+          <option value="pa-IN">Punjabi &mdash; ਪੰਜਾਬੀ</option>
         </select>
-        <div class="hint">Must be one of the agent's allowed languages.</div>
+        <div class="hint">Used for both listening and speaking.</div>
+      </div>
+
+      <div class="field-row">
+        <label class="switch">
+          <input type="checkbox" id="cfgVoice" checked />
+          <span>Radha speaks her replies out loud</span>
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="switch">
+          <input type="checkbox" id="cfgAuto" checked />
+          <span>Hands-free &mdash; keep listening after she replies</span>
+        </label>
       </div>
 
       <div class="btn-row">
-        <button class="btn primary" id="saveCfg" type="button">Save</button>
-        <button class="btn ghost" id="testCfg" type="button">Save &amp; connect</button>
-        <button class="btn danger" id="clearCfg" type="button">Clear</button>
+        <button class="btn primary" id="testVoice" type="button">Hear Radha's voice</button>
+        <button class="btn ghost" id="saveCfg" type="button">Save</button>
       </div>
       <div class="status-line" id="cfgStatus"></div>
+
+      <div class="field-row" style="margin-top:18px">
+        <div class="hint" id="voiceInfo"></div>
+      </div>
     </div>
   </aside>
 </main>

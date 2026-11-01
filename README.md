@@ -1,144 +1,85 @@
 # Radha · Made for Each Other
 
-A WhatsApp-style **voice chat room** for a Sarvam **Voice Agents** agent. Tap the mic,
-Chromium asks for microphone permission, and you talk to Radha in real time — her words
-appear as chat bubbles as she speaks.
+A WhatsApp-style **voice chat room** where Radha listens and talks back — **entirely inside your
+browser**. No server, no API key, no Sarvam credits, nothing to sign up for.
 
-Static site. No server, no build step, open source. Works on GitHub Pages, Netlify, or any
-static host (must be **https** or `localhost` for microphone access).
+Tap the mic, allow the microphone once, and speak. Your words appear as chat bubbles and Radha
+answers out loud, in Hindi or English.
+
+Live: https://rinkukumaryouth-hash.github.io/radha-voice-chat/
 
 ---
 
-## What's in the box
+## How it works (all client-side)
+
+| Part | What it uses |
+| --- | --- |
+| **Listening** | The browser's own `SpeechRecognition` / `webkitSpeechRecognition` |
+| **Thinking** | A local reply engine in `app.js`, plus Chrome's built-in AI (Gemini Nano) *if* it is already installed on the device |
+| **Speaking** | The browser's `speechSynthesis` voices |
+| **Microphone** | `getUserMedia`, only for the live level meter |
+
+There is no backend to deploy, no key to paste and no per-minute cost. The page is plain
+`index.html` + `styles.css` + `app.js` and can be opened from any static host.
+
+**Browser support:** speech *recognition* works in Chrome, Edge and Chromium on desktop and
+Android (Safari/Firefox will still let you type, and will still speak replies). Microphone
+access needs **https** or `localhost`.
+
+## Files
 
 ```
-index.html            the chat room (WhatsApp-style UI)
-styles.css            WhatsApp look & feel, Radha theme
-app.js                mic + live voice session + demo mode
-assets/radha.jpg      Radha's photo (shown in the chat)
-assets/radha-avatar.jpg  small header avatar
+index.html               the chat room
+styles.css               WhatsApp look & feel
+app.js                   mic, speech recognition, local brain, speech synthesis
+assets/radha.jpg         Radha's photo (shown in the chat)
+assets/radha-avatar.jpg  header avatar
 README.md
 ```
 
-## Two modes
+## Using it
 
-**Demo mode (no key needed).** Open the page, tap the mic — the browser asks for microphone
-permission and a live level meter appears. Typed messages get friendly local replies so the
-room feels alive. This works with zero configuration, so the public link is useful to anyone.
+1. Open the page (https).
+2. Tap the **mic**. Allow the microphone when Chromium asks.
+3. Speak — Radha transcribes you into the chat and replies aloud.
+4. Tap the mic again to stop. Or just type in the box at the bottom.
 
-**Live mode (real voice).** Open **⚙ Settings**, paste your **Agent ID** and **API key**, save,
-then tap the mic. The page starts a real-time session with your agent over the
-`sarvam-conv-ai-sdk/browser` SDK: your microphone audio streams to Sarvam, and the agent's
-reply plays out loud while both sides appear as chat bubbles.
+In **⚙ Settings** you can change the language (used for both listening and speaking), turn
+Radha's voice off, and switch *hands-free* mode — where she keeps listening after each reply.
 
-Your Organization ID and Workspace ID are pre-filled from your workspace.
+### Voices
+The voice depends on what your device has installed. On Chrome desktop you usually get a Hindi
+voice (`hi-IN`) and an Indian English voice (`en-IN`); on Android there are more. If no voice
+exists for a language, the browser falls back to its default — the Settings panel shows which
+voice is currently selected.
 
-## How to get the two values you need
+### The "brain"
+`ruleReply()` in `app.js` handles greetings, names, "how are you", love, thanks, goodbyes, the
+time and date, jokes, and falls back to a small pool of warm lines. It is deliberately simple and
+fully offline. If Chrome's on-device model is already available (`window.LanguageModel`), Radha
+uses it for freer conversation instead — the code never triggers a model download on its own.
 
-| Value | Where |
-| --- | --- |
-| **API key** (`X-API-Key`) | Indus → **Settings → API Key**: https://indus.sarvam.ai/samvaad/settings/api-key — Voice Agents keys are separate from standard TTS/STT keys |
-| **Agent ID** (`app_id`) | Indus → your agent → **···** menu → **Copy agent ID** |
-
-The agent must have a **committed version** or the session will fail to connect.
-
----
-
-## About the API key (please read)
-
-The docs are explicit: *never put a production API key in browser code — proxy it server-side.*
-This project deliberately takes the "no server" route you asked for, which means the key is
-typed into the page and kept **only in your browser's `localStorage`**, then sent straight to
-Sarvam. It is never written into this repo and never sent anywhere else.
-
-That is fine for a personal demo you open yourself. For a **public** site, don't hand the key
-to visitors — put it behind a tiny proxy instead and point the SDK's `baseUrl` at it
-(`apiKey: ""`, `baseUrl: "/api/sarvam/"`). See the "Keeping the key server-side" note in the
-Sarvam Web SDK docs.
-
----
+To give her a bigger brain later, replace `generateReply()` with a call to any API you like. That
+is the single seam where a real model would plug in.
 
 ## Deploy
 
-### GitHub Pages
-1. Push these files to a repo (root, or `/docs`).
-2. Repo → **Settings → Pages** → Source: **Deploy from a branch** → branch `main`, folder `/ (root)`.
-3. Your room goes live at `https://<user>.github.io/<repo>/`.
+**GitHub Pages** — push to a repo, then Settings → Pages → Deploy from a branch → `main` / `/ (root)`.
 
-### Netlify (fastest)
-Drag the folder onto https://app.netlify.com/drop, or connect the repo with:
-- Build command: *(none)*
-- Publish directory: `/` (the repo root)
+**Netlify** — drag the folder onto https://app.netlify.com/drop.
 
----
+## Notes
 
-## Under the hood — the Voice Agents bits
+- Nothing this app does is uploaded by *this app*; audio only reaches your browser's own speech
+  service, which Chrome/Edge use to transcribe.
+- The Radha photo belongs to whoever supplied it — swap `assets/radha.jpg` for an image you have
+  the rights to before publishing publicly.
+- MIT licence.
 
-Auth is a single header on every call: `X-API-Key: <key>`.
+## Earlier version
 
-The browser session uses the official Web SDK, `sarvam-conv-ai-sdk` (browser entry point),
-with `ConversationAgent` + `BrowserAudioInterface`:
-
-```js
-import { ConversationAgent, BrowserAudioInterface, InteractionType }
-  from "sarvam-conv-ai-sdk/browser";
-
-const agent = new ConversationAgent({
-  apiKey: "<key>",
-  config: {
-    org_id: "<org>", workspace_id: "<workspace>", app_id: "<agent>",
-    user_identifier: "radha-web-user", user_identifier_type: "custom",
-    interaction_type: InteractionType.CALL,
-    input_sample_rate: 16000, output_sample_rate: 16000,
-  },
-  audioInterface: new BrowserAudioInterface(16000),
-  transcriptCallback: (m) => console.log(m.role, m.content),
-});
-await agent.start();
-await agent.waitForConnect(10);
-```
-
-`start()` must run from a user gesture (the mic tap) so Chromium allows mic + playback.
-Reconnection is not supported — each session URL is single-use; call `stop()` and start a new
-agent if the connection drops.
-
-### Service base URLs (they differ per service)
-| Service | Base URL |
-| --- | --- |
-| Deployments | `https://apps.sarvam.ai/api/app-authoring` |
-| Campaigns & Cohorts | `https://apps.sarvam.ai/api/scheduling` |
-| Instant Outbound | `https://apps.sarvam.ai/api/outbounds` |
-| Analytics & Boards | `https://apps.sarvam.ai/api` |
-| Tests | `https://apps.sarvam.ai/api/evals` |
-| Runtime (WebSocket sessions) | `https://apps.sarvam.ai/api/app-runtime/` |
-
-### Instant outbound call (server-side, optional)
-If you later want a "call me" button, this is the exact contract — run it from a backend,
-never the browser:
-
-```
-POST https://apps.sarvam.ai/api/outbounds/v1/orgs/{org_id}/workspaces/{workspace_id}/outbounds
-X-API-Key: <key>
-{
-  "app_config": {
-    "app_id": "<agent id>",
-    "app_version": 1,
-    "connection_config": { "connection_id": "<connection id>", "agent_phone_number": "<your Sarvam number>" }
-  },
-  "user_config": { "user_phone_number": "+91XXXXXXXXXX" }
-}
--> { "attempt_id": "..." }
-```
-
-You'll need a **connection ID** and a **phone number** (E.164) for this — ask your workspace
-admin, or bring/rent a number under Deploy → Phone Numbers.
-
----
-
-## Docs
-- Deploy with code: https://docs.sarvam.ai/conversations/deploy/deploy-with-code
-- Web SDK: https://docs.sarvam.ai/voice-agents/deploy/sdks/web
-- API reference: https://docs.sarvam.ai/conversations/api/introduction
-
-Licence: MIT. The Radha photo belongs to whoever supplied it — replace `assets/radha.jpg` with
-an image you have the rights to before publishing publicly.
+A first version of this project could open a live session with a **Sarvam Voice Agent**
+(`sarvam-conv-ai-sdk/browser`) using an API key. That path has been removed on request, so the
+site now runs with no key and no credits. If you ever want it back, the Sarvam docs are at
+https://docs.sarvam.ai/conversations/deploy/deploy-with-code — and the key must live behind a
+server-side proxy, never in the page.
