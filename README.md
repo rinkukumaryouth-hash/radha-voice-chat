@@ -3,35 +3,56 @@
 A WhatsApp-style **voice chat room** where Radha listens and talks back — **entirely inside your
 browser**. No server, no API key, no Sarvam credits, nothing to sign up for.
 
-Tap the mic, allow the microphone once, and speak. Your words appear as chat bubbles and Radha
-answers out loud, in Hindi or English.
+**Live:** https://rinkukumaryouth-hash.github.io/radha-voice-chat/
 
-Live: https://rinkukumaryouth-hash.github.io/radha-voice-chat/
+Tap the mic, allow the microphone once, and speak. Your words appear as chat bubbles and Radha
+answers out loud.
 
 ---
 
-## How it works (all client-side)
+## Why there are two voice engines
+
+The browser's built-in `SpeechRecognition` only really works in **Google Chrome / Edge** — it
+leans on Google's speech service. **Plain Chromium ships without that service**, and worse, it
+fails *silently*: `start()` is called, no event ever fires, and the UI sits on "Listening…"
+forever.
+
+So the app has two engines and picks one automatically:
+
+| Engine | What it uses | Works in |
+| --- | --- | --- |
+| **Browser speech** | `webkitSpeechRecognition` | Chrome, Edge |
+| **On-device (Whisper)** | [transformers.js](https://github.com/xenova/transformers.js) running Whisper in WASM | **any Chromium**, offline after first load |
+
+**Auto mode** tries browser speech first. A 4-second watchdog notices if it never actually
+starts, then silently switches to the on-device model. The choice is remembered, so later visits
+skip straight to the engine that works.
+
+You can force either engine in **⚙ Settings → Voice input**.
+
+### On-device mode in practice
+- First use downloads a small Whisper model (~40 MB) and caches it; afterwards it starts instantly.
+- It's **push-to-talk**: tap the mic, speak, tap again. She transcribes locally and replies.
+- `whisper-tiny.en` for English, multilingual `whisper-tiny` for other languages.
+- Slower than browser speech (a few seconds per utterance) but it works everywhere and the audio
+  never leaves your device.
+
+## Everything else
 
 | Part | What it uses |
 | --- | --- |
-| **Listening** | The browser's own `SpeechRecognition` / `webkitSpeechRecognition` |
-| **Thinking** | A local reply engine in `app.js`, plus Chrome's built-in AI (Gemini Nano) *if* it is already installed on the device |
+| **Thinking** | A local reply engine in `app.js`, plus Chrome's built-in AI (Gemini Nano) *if* already installed |
 | **Speaking** | The browser's `speechSynthesis` voices |
-| **Microphone** | `getUserMedia`, only for the live level meter |
+| **Microphone** | `getUserMedia` (for the level meter and, on-device, for recording) |
 
-There is no backend to deploy, no key to paste and no per-minute cost. The page is plain
-`index.html` + `styles.css` + `app.js` and can be opened from any static host.
-
-**Browser support:** speech *recognition* works in Chrome, Edge and Chromium on desktop and
-Android (Safari/Firefox will still let you type, and will still speak replies). Microphone
-access needs **https** or `localhost`.
+Microphone access needs **https** or `localhost`.
 
 ## Files
 
 ```
 index.html               the chat room
 styles.css               WhatsApp look & feel
-app.js                   mic, speech recognition, local brain, speech synthesis
+app.js                   engines, local brain, speech synthesis
 assets/radha.jpg         Radha's photo (shown in the chat)
 assets/radha-avatar.jpg  header avatar
 README.md
@@ -39,47 +60,36 @@ README.md
 
 ## Using it
 
-1. Open the page (https).
-2. Tap the **mic**. Allow the microphone when Chromium asks.
-3. Speak — Radha transcribes you into the chat and replies aloud.
-4. Tap the mic again to stop. Or just type in the box at the bottom.
+1. Open the page over https.
+2. Tap the **mic**, allow the microphone.
+3. Speak. In Chrome it's hands-free; on-device it's tap-to-start / tap-to-stop.
+4. Or just type in the box at the bottom — that always works.
 
-In **⚙ Settings** you can change the language (used for both listening and speaking), turn
-Radha's voice off, and switch *hands-free* mode — where she keeps listening after each reply.
-
-### Voices
-The voice depends on what your device has installed. On Chrome desktop you usually get a Hindi
-voice (`hi-IN`) and an Indian English voice (`en-IN`); on Android there are more. If no voice
-exists for a language, the browser falls back to its default — the Settings panel shows which
-voice is currently selected.
+In **⚙ Settings**: voice input engine, language (used for speaking and for browser speech),
+Radha's voice on/off, and hands-free mode.
 
 ### The "brain"
-`ruleReply()` in `app.js` handles greetings, names, "how are you", love, thanks, goodbyes, the
-time and date, jokes, and falls back to a small pool of warm lines. It is deliberately simple and
-fully offline. If Chrome's on-device model is already available (`window.LanguageModel`), Radha
-uses it for freer conversation instead — the code never triggers a model download on its own.
-
-To give her a bigger brain later, replace `generateReply()` with a call to any API you like. That
-is the single seam where a real model would plug in.
+`ruleReply()` handles greetings, names, "how are you", love, thanks, goodbyes, time and date,
+jokes, with a warm fallback pool. If Chrome's on-device model is already available
+(`window.LanguageModel`) it is used for freer conversation — the code never triggers a model
+download by itself. `generateReply()` is the single seam where a bigger model would plug in.
 
 ## Deploy
 
-**GitHub Pages** — push to a repo, then Settings → Pages → Deploy from a branch → `main` / `/ (root)`.
-
+**GitHub Pages** — push, then Settings → Pages → Deploy from a branch → `main` / `/ (root)`.
 **Netlify** — drag the folder onto https://app.netlify.com/drop.
 
 ## Notes
 
-- Nothing this app does is uploaded by *this app*; audio only reaches your browser's own speech
-  service, which Chrome/Edge use to transcribe.
+- This app uploads nothing itself. In browser-speech mode the audio goes to your browser's own
+  speech service; in on-device mode it stays local.
 - The Radha photo belongs to whoever supplied it — swap `assets/radha.jpg` for an image you have
   the rights to before publishing publicly.
 - MIT licence.
 
 ## Earlier version
 
-A first version of this project could open a live session with a **Sarvam Voice Agent**
-(`sarvam-conv-ai-sdk/browser`) using an API key. That path has been removed on request, so the
-site now runs with no key and no credits. If you ever want it back, the Sarvam docs are at
-https://docs.sarvam.ai/conversations/deploy/deploy-with-code — and the key must live behind a
-server-side proxy, never in the page.
+A first version could open a live session with a **Sarvam Voice Agent** using an API key. That
+path was removed on request so the site runs with no key and no credits. Docs, if you ever want
+it back: https://docs.sarvam.ai/conversations/deploy/deploy-with-code — and the key must live
+behind a server-side proxy, never in the page.

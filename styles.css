@@ -172,7 +172,7 @@ body {
 /* photo message */
 .photo-bubble { padding: 4px; }
 .photo-bubble img {
-  display: block; width: 100%; max-width: 260px;
+  display: block; width: 100%; max-width: 210px;
   border-radius: 7px; cursor: zoom-in;
 }
 .photo-bubble .meta { padding: 2px 6px 2px 0; }
